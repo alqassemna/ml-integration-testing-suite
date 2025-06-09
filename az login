@@ -1,0 +1,90 @@
+az login
+npm install @azure/identity @azure/arm-appservice @azure/arm-resources @azure/keyvault-secrets @azure/arm-managedidentity
+const { DefaultAzureCredential } = require("@azure/identity");
+const { ResourceManagementClient } = require("@azure/arm-resources");
+const { WebSiteManagementClient } = require("@azure/arm-appservice");
+const { SecretClient } = require("@azure/keyvault-secrets");
+const { ManagedServiceIdentityClient } = require("@azure/arm-managedidentity");
+const { execSync } = require("child_process");
+
+const subscriptionId = "<your-subscription-id>";
+const resourceGroupName = "n8n-resource-group";
+const location = "eastus";
+const appServicePlanName = "n8n-app-plan";
+const webAppName = "n8n-web-app-" + Math.floor(Math.random() * 100000);
+const keyVaultName = "torontik-kv";
+const secretName = "n8n-auth-password";
+const secretValue = "supersecurepassword";
+const userAssignedIdentityName = "n8n-uami";
+
+const credential = new DefaultAzureCredential();
+const resourceClient = new ResourceManagementClient(credential, subscriptionId);
+const webAppClient = new WebSiteManagementClient(credential, subscriptionId);
+const kvUri = `https://${keyVaultName}.vault.azure.net`;
+const secretClient = new SecretClient(kvUri, credential);
+const uamiClient = new ManagedServiceIdentityClient(credential, subscriptionId);
+
+async function deployWithUAMI() {
+  console.log("📦 Creating resource group...");
+  await resourceClient.resourceGroups.createOrUpdate(resourceGroupName, { location });
+
+  console.log("🆔 Creating user-assigned identity...");
+  const uami = await uamiClient.userAssignedIdentities.createOrUpdate(resourceGroupName, userAssignedIdentityName, {
+    location
+  });
+  const uamiClientId = uami.clientId;
+  const uamiPrincipalId = uami.principalId;
+  const uamiResourceId = uami.id;
+
+  console.log("🛠 Creating App Service plan...");
+  await webAppClient.appServicePlans.beginCreateOrUpdateAndWait(resourceGroupName, appServicePlanName, {
+    location,
+    kind: "linux",
+    reserved: true,
+    sku: { name: "B1", tier: "Basic", size: "B1", capacity: 1 }
+  });
+
+  console.log("🔐 Creating secret in Key Vault...");
+  await secretClient.setSecret(secretName, secretValue);
+
+  console.log("🔧 Granting Key Vault access to user-assigned identity...");
+  execSync(`az keyvault set-policy --name ${keyVaultName} --object-id ${uamiPrincipalId} --secret-permissions get list`, {
+    stdio: "inherit"
+  });
+
+  console.log("🚀 Creating Web App with UAMI and Key Vault reference...");
+  await webAppClient.webApps.beginCreateOrUpdateAndWait(resourceGroupName, webAppName, {
+    location,
+    serverFarmId: appServicePlanName,
+    identity: {
+      type: "UserAssigned",
+      userAssignedIdentities: {
+        [uamiResourceId]: {}
+      }
+    },
+    siteConfig: {
+      linuxFxVersion: "DOCKER|n8nio/n8n",
+      appSettings: [
+        { name: "WEBSITES_ENABLE_APP_SERVICE_STORAGE", value: "false" },
+        { name: "WEBSITES_PORT", value: "5678" },
+        { name: "N8N_BASIC_AUTH_ACTIVE", value: "true" },
+        { name: "N8N_BASIC_AUTH_USER", value: "admin" },
+        {
+          name: "N8N_BASIC_AUTH_PASSWORD",
+          value: `@Microsoft.KeyVault(SecretUri=${kvUri}/secrets/${secretName}/)`
+        },
+        { name: "N8N_HOST", value: `${webAppName}.azurewebsites.net` },
+        { name: "N8N_PORT", value: "5678" },
+        { name: "WEBHOOK_URL", value: `https://${webAppName}.azurewebsites.net/` }
+      ]
+    },
+    httpsOnly: true
+  });
+
+  console.log("✅ All done! Visit:");
+  console.log(`https://${webAppName}.azurewebsites.net`);
+}
+
+deployWithUAMI().catch((err) => {
+  console.error("❌ Error:", err.message);
+});
