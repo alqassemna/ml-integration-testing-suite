@@ -1,0 +1,116 @@
+import React, { useState } from 'react';
+import { Play, Settings, Database, Mic, Speaker, Brain, Code, GitBranch, Zap, Cloud, MessageCircle } from 'lucide-react';
+
+const N8NWorkflowDiagrams = () => {
+  const [activeWorkflow, setActiveWorkflow] = useState('podcast');
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const workflows = {
+    podcast: {
+      name: "Automated Podcast Generation",
+      description: "End-to-end podcast creation from RSS feeds with multiple TTS attention mechanisms",
+      nodes: [
+        { id: 'rss', type: 'trigger', name: 'RSS Feed Monitor', x: 50, y: 200, icon: <GitBranch className="w-4 h-4" />, color: 'bg-blue-500' },
+        { id: 'content', type: 'process', name: 'Content Analyzer', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'script', type: 'process', name: 'Script Generator', x: 350, y: 200, icon: <Code className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'attention', type: 'decision', name: 'Attention Selector', x: 500, y: 150, icon: <Settings className="w-4 h-4" />, color: 'bg-orange-500' },
+        { id: 'tts1', type: 'process', name: 'Content-Based TTS', x: 650, y: 100, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'tts2', type: 'process', name: 'Location-Aware TTS', x: 650, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-purple-600' },
+        { id: 'quality', type: 'process', name: 'Quality Checker', x: 800, y: 150, icon: <Zap className="w-4 h-4" />, color: 'bg-red-500' },
+        { id: 'publish', type: 'output', name: 'Publish to AWS', x: 950, y: 150, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'rss', to: 'content' },
+        { from: 'content', to: 'script' },
+        { from: 'script', to: 'attention' },
+        { from: 'attention', to: 'tts1' },
+        { from: 'attention', to: 'tts2' },
+        { from: 'tts1', to: 'quality' },
+        { from: 'tts2', to: 'quality' },
+        { from: 'quality', to: 'publish' }
+      ]
+    },
+    customer: {
+      name: "Customer Service Voice Bot",
+      description: "Real-time customer support with dynamic attention mechanism selection",
+      nodes: [
+        { id: 'webhook', type: 'trigger', name: 'Support Webhook', x: 50, y: 200, icon: <Mic className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'classify', type: 'process', name: 'Intent Classifier', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'urgency', type: 'decision', name: 'Urgency Check', x: 350, y: 150, icon: <Zap className="w-4 h-4" />, color: 'bg-red-500' },
+        { id: 'fast_tts', type: 'process', name: 'Fast TTS (Decoder-Only)', x: 500, y: 100, icon: <Speaker className="w-4 h-4" />, color: 'bg-orange-600' },
+        { id: 'quality_tts', type: 'process', name: 'Quality TTS (Location-Aware)', x: 500, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'ai_chat', type: 'process', name: 'AI Chat Bot', x: 350, y: 250, icon: <MessageCircle className="w-4 h-4" />, color: 'bg-yellow-500' },
+        { id: 'delivery', type: 'output', name: 'Voice Delivery', x: 650, y: 150, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'webhook', to: 'classify' },
+        { from: 'classify', to: 'urgency' },
+        { from: 'classify', to: 'ai_chat' },
+        { from: 'urgency', to: 'fast_tts' },
+        { from: 'urgency', to: 'quality_tts' },
+        { from: 'ai_chat', to: 'fast_tts' },
+        { from: 'ai_chat', to: 'quality_tts' },
+        { from: 'fast_tts', to: 'delivery' },
+        { from: 'quality_tts', to: 'delivery' }
+      ]
+    },
+    multilingual: {
+      name: "Multilingual Content Pipeline",
+      description: "Automated translation and localized TTS with cultural adaptation",
+      nodes: [
+        { id: 'source', type: 'trigger', name: 'Content Source', x: 50, y: 200, icon: <Database className="w-4 h-4" />, color: 'bg-blue-500' },
+        { id: 'translate', type: 'process', name: 'Multi-Translator', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'cultural', type: 'process', name: 'Cultural Adapter', x: 350, y: 200, icon: <Settings className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'voice_select', type: 'decision', name: 'Voice Selector', x: 500, y: 150, icon: <Mic className="w-4 h-4" />, color: 'bg-orange-500' },
+        { id: 'en_tts', type: 'process', name: 'English TTS', x: 650, y: 80, icon: <Speaker className="w-4 h-4" />, color: 'bg-red-600' },
+        { id: 'es_tts', type: 'process', name: 'Spanish TTS', x: 650, y: 140, icon: <Speaker className="w-4 h-4" />, color: 'bg-yellow-600' },
+        { id: 'fr_tts', type: 'process', name: 'French TTS', x: 650, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'zh_tts', type: 'process', name: 'Chinese TTS', x: 650, y: 260, icon: <Speaker className="w-4 h-4" />, color: 'bg-purple-600' },
+        { id: 'quality_check', type: 'process', name: 'Quality Assurance', x: 800, y: 170, icon: <Zap className="w-4 h-4" />, color: 'bg-pink-500' },
+        { id: 'distribute', type: 'output', name: 'Global Distribution', x: 950, y: 170, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'source', to: 'translate' },
+        { from: 'translate', to: 'cultural' },
+        { from: 'cultural', to: 'voice_select' },
+        { from: 'voice_select', to: 'en_tts' },
+        { from: 'voice_select', to: 'es_tts' },
+        { from: 'voice_select', to: 'fr_tts' },
+        { from: 'voice_select', to: 'zh_tts' },
+        { from: 'en_tts', to: 'quality_check' },
+        { from: 'es_tts', to: 'quality_check' },
+        { from: 'fr_tts', to: 'quality_check' },
+        { from: 'zh_tts', to: 'quality_check' },
+        { from: 'quality_check', to: 'distribute' }
+      ]
+    }
+  };
+
+  const nodeConfigurations = {
+    // ...existing nodeConfigurations...
+
+    ai_chat: {
+      title: "AI Chat Bot",
+      description: "Integrates with an external AI chat bot service to generate dynamic responses for customer requests.",
+      config: {
+        provider: "Blackbox AI",
+        endpoint: "https://www.blackbox.ai/",
+        model: "gpt-4/blackbox"
+      },
+      code: `{
+  "parameters": {
+    "input": "={{$json['customer_message']}}",
+    "endpoint": "https://www.blackbox.ai/",
+    "model": "gpt-4"
+  },
+  "note": "Learn more at https://www.blackbox.ai/"
+}`
+    },
+    // ...other node configurations remain unchanged...
+  };
+
+  // ...all other UI code remains unchanged...
+};
+
+export default N8NWorkflowDiagrams;
+
