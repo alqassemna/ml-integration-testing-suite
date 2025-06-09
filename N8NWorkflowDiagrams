@@ -1,0 +1,384 @@
+import React, { useState } from 'react';
+import { Play, Settings, Database, Mic, Speaker, Brain, Code, GitBranch, Zap, Cloud } from 'lucide-react';
+
+const N8NWorkflowDiagrams = () => {
+  const [activeWorkflow, setActiveWorkflow] = useState('podcast');
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const workflows = {
+    podcast: {
+      name: "Automated Podcast Generation",
+      description: "End-to-end podcast creation from RSS feeds with multiple TTS attention mechanisms",
+      nodes: [
+        { id: 'rss', type: 'trigger', name: 'RSS Feed Monitor', x: 50, y: 200, icon: <GitBranch className="w-4 h-4" />, color: 'bg-blue-500' },
+        { id: 'content', type: 'process', name: 'Content Analyzer', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'script', type: 'process', name: 'Script Generator', x: 350, y: 200, icon: <Code className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'attention', type: 'decision', name: 'Attention Selector', x: 500, y: 150, icon: <Settings className="w-4 h-4" />, color: 'bg-orange-500' },
+        { id: 'tts1', type: 'process', name: 'Content-Based TTS', x: 650, y: 100, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'tts2', type: 'process', name: 'Location-Aware TTS', x: 650, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-purple-600' },
+        { id: 'quality', type: 'process', name: 'Quality Checker', x: 800, y: 150, icon: <Zap className="w-4 h-4" />, color: 'bg-red-500' },
+        { id: 'publish', type: 'output', name: 'Publish to AWS', x: 950, y: 150, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'source', to: 'translate' },
+        { from: 'translate', to: 'cultural' },
+        { from: 'cultural', to: 'voice_select' },
+        { from: 'voice_select', to: 'en_tts' },
+        { from: 'voice_select', to: 'es_tts' },
+        { from: 'voice_select', to: 'fr_tts' },
+        { from: 'voice_select', to: 'zh_tts' },
+        { from: 'en_tts', to: 'quality_check' },
+        { from: 'es_tts', to: 'quality_check' },
+        { from: 'fr_tts', to: 'quality_check' },
+        { from: 'zh_tts', to: 'quality_check' },
+        { from: 'quality_check', to: 'distribute' }
+      ]
+    }
+  };
+
+  const nodeConfigurations = {
+    rss: {
+      title: "RSS Feed Monitor",
+      description: "Monitors RSS feeds for new content every 15 minutes",
+      config: {
+        url: "https://example-podcast.com/feed.xml",
+        interval: "15 minutes",
+        filter: "new episodes only"
+      },
+      code: `{
+  "parameters": {
+    "url": "={{$json.rss_url}}",
+    "pollInterval": 900,
+    "options": {
+      "triggerOn": "newItem"
+    }
+  }
+}`
+    },
+    attention: {
+      title: "Attention Mechanism Selector",
+      description: "Dynamically selects TTS attention mechanism based on content analysis",
+      config: {
+        criteria: "Content complexity, urgency, quality requirements",
+        fallback: "content_based",
+        performance_threshold: "2.0 RTF"
+      },
+      code: `{
+  "parameters": {
+    "conditions": {
+      "complex_content": "location_aware",
+      "real_time": "decoder_only", 
+      "balanced": "content_based",
+      "mobile": "location_based"
+    },
+    "evaluation": "={{$json.complexity_score}}"
+  }
+}`
+    },
+    tts1: {
+      title: "Content-Based TTS Node",
+      description: "High-quality TTS using content-based attention mechanism",
+      config: {
+        voice: "IBM Watson Neural Voice",
+        attention_type: "content_based",
+        quality: "premium"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json.script_content}}",
+    "voice": "en-US_AllisonV3Voice",
+    "attention_mechanism": "content_based",
+    "accept": "audio/wav",
+    "rate": "22050"
+  }
+}`
+    },
+    quality: {
+      title: "Audio Quality Checker",
+      description: "Validates audio quality using MOS scoring and WER analysis",
+      config: {
+        min_mos: 4.0,
+        max_wer: 3.0,
+        format_check: true
+      },
+      code: `{
+  "parameters": {
+    "quality_metrics": {
+      "mos_threshold": 4.0,
+      "wer_threshold": 3.0,
+      "snr_minimum": 20
+    },
+    "retry_on_fail": true
+  }
+}`
+    }
+  };
+
+  const WorkflowNode = ({ node, isSelected, onClick }) => (
+    <div
+      className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ${
+        isSelected ? 'scale-110 z-10' : 'hover:scale-105'
+      }`}
+      style={{ left: node.x, top: node.y }}
+      onClick={() => onClick(node.id)}
+    >
+      <div className={`${node.color} p-3 rounded-lg shadow-lg border-2 ${
+        isSelected ? 'border-white' : 'border-transparent'
+      }`}>
+        <div className="flex items-center space-x-2">
+          {node.icon}
+          <span className="text-xs font-medium text-white">{node.name}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ConnectionLine = ({ from, to, nodes }) => {
+    const fromNode = nodes.find(n => n.id === from);
+    const toNode = nodes.find(n => n.id === to);
+    
+    if (!fromNode || !toNode) return null;
+
+    return (
+      <line
+        x1={fromNode.x}
+        y1={fromNode.y}
+        x2={toNode.x}
+        y2={toNode.y}
+        stroke="#64748b"
+        strokeWidth="2"
+        markerEnd="url(#arrowhead)"
+        className="transition-all duration-300 hover:stroke-purple-400"
+      />
+    );
+  };
+
+  const currentWorkflow = workflows[activeWorkflow];
+  const selectedNodeConfig = selectedNode ? nodeConfigurations[selectedNode] : null;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
+            N8N TTS Automation Workflows
+          </h1>
+          <p className="text-gray-300 max-w-3xl mx-auto">
+            Visual workflow designer for neural TTS automation with IBM Watson integration. 
+            Click nodes to view configuration details and implementation code.
+          </p>
+        </div>
+
+        {/* Workflow Selector */}
+        <div className="mb-8 flex justify-center space-x-4">
+          {Object.entries(workflows).map(([key, workflow]) => (
+            <button
+              key={key}
+              onClick={() => {setActiveWorkflow(key); setSelectedNode(null);}}
+              className={`px-6 py-3 rounded-lg transition-all duration-300 ${
+                activeWorkflow === key
+                  ? 'bg-purple-600 text-white shadow-lg'
+                  : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
+              }`}
+            >
+              {workflow.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Workflow Canvas */}
+          <div className="lg:col-span-2">
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+              <div className="mb-4">
+                <h2 className="text-2xl font-bold mb-2">{currentWorkflow.name}</h2>
+                <p className="text-gray-300 text-sm">{currentWorkflow.description}</p>
+              </div>
+              
+              <div className="relative bg-slate-900/50 rounded-lg p-4 overflow-hidden" style={{ height: '400px' }}>
+                <svg className="absolute inset-0 w-full h-full">
+                  <defs>
+                    <marker
+                      id="arrowhead"
+                      markerWidth="10"
+                      markerHeight="7"
+                      refX="9"
+                      refY="3.5"
+                      orient="auto"
+                    >
+                      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+                    </marker>
+                  </defs>
+                  {currentWorkflow.connections.map((conn, idx) => (
+                    <ConnectionLine
+                      key={idx}
+                      from={conn.from}
+                      to={conn.to}
+                      nodes={currentWorkflow.nodes}
+                    />
+                  ))}
+                </svg>
+                
+                {currentWorkflow.nodes.map(node => (
+                  <WorkflowNode
+                    key={node.id}
+                    node={node}
+                    isSelected={selectedNode === node.id}
+                    onClick={setSelectedNode}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Node Configuration Panel */}
+          <div className="space-y-6">
+            {selectedNodeConfig ? (
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+                <h3 className="text-xl font-bold mb-3 flex items-center">
+                  <Settings className="w-5 h-5 mr-2" />
+                  {selectedNodeConfig.title}
+                </h3>
+                <p className="text-gray-300 text-sm mb-4">{selectedNodeConfig.description}</p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-purple-400 mb-2">Configuration:</h4>
+                    <div className="space-y-2">
+                      {Object.entries(selectedNodeConfig.config).map(([key, value]) => (
+                        <div key={key} className="flex justify-between text-sm">
+                          <span className="text-gray-400">{key}:</span>
+                          <span className="text-white font-mono">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-green-400 mb-2">N8N Code:</h4>
+                    <pre className="bg-slate-900 p-3 rounded text-xs text-green-300 overflow-x-auto">
+                      {selectedNodeConfig.code}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 text-center">
+                <Settings className="w-12 h-12 mx-auto mb-4 text-gray-500" />
+                <p className="text-gray-400">Click on a workflow node to view its configuration</p>
+              </div>
+            )}
+
+            {/* Implementation Guide */}
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700">
+              <h3 className="text-xl font-bold mb-3 flex items-center">
+                <Code className="w-5 h-5 mr-2" />
+                Implementation Guide
+              </h3>
+              
+              <div className="space-y-3 text-sm">
+                <div>
+                  <h4 className="font-semibold text-blue-400">Custom N8N Nodes:</h4>
+                  <ul className="text-gray-300 space-y-1 mt-1">
+                    <li>• IBM Watson TTS Integration</li>
+                    <li>• Attention Mechanism Selector</li>
+                    <li>• Audio Quality Analyzer</li>
+                    <li>• Multi-language Voice Selector</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-green-400">Required APIs:</h4>
+                  <ul className="text-gray-300 space-y-1 mt-1">
+                    <li>• IBM Watson Text-to-Speech</li>
+                    <li>• IBM Watson Language Translator</li>
+                    <li>• AWS S3 for audio storage</li>
+                    <li>• Custom TTS quality metrics API</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-purple-400">Environment Variables:</h4>
+                  <div className="bg-slate-900 p-2 rounded mt-1 font-mono text-xs">
+                    <div>IBM_TTS_API_KEY</div>
+                    <div>AWS_S3_BUCKET</div>
+                    <div>QUALITY_THRESHOLD</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Workflow Statistics */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700 text-center">
+            <div className="text-2xl font-bold text-blue-400">{currentWorkflow.nodes.length}</div>
+            <div className="text-sm text-gray-400">Total Nodes</div>
+          </div>
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700 text-center">
+            <div className="text-2xl font-bold text-green-400">{currentWorkflow.connections.length}</div>
+            <div className="text-sm text-gray-400">Connections</div>
+          </div>
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700 text-center">
+            <div className="text-2xl font-bold text-purple-400">~{Math.floor(Math.random() * 30 + 10)}s</div>
+            <div className="text-sm text-gray-400">Avg Processing</div>
+          </div>
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700 text-center">
+            <div className="text-2xl font-bold text-orange-400">99.2%</div>
+            <div className="text-sm text-gray-400">Success Rate</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default N8NWorkflowDiagrams; 'rss', to: 'content' },
+        { from: 'content', to: 'script' },
+        { from: 'script', to: 'attention' },
+        { from: 'attention', to: 'tts1' },
+        { from: 'attention', to: 'tts2' },
+        { from: 'tts1', to: 'quality' },
+        { from: 'tts2', to: 'quality' },
+        { from: 'quality', to: 'publish' }
+      ]
+    },
+    customer: {
+      name: "Customer Service Voice Bot",
+      description: "Real-time customer support with dynamic attention mechanism selection",
+      nodes: [
+        { id: 'webhook', type: 'trigger', name: 'Support Webhook', x: 50, y: 200, icon: <Mic className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'classify', type: 'process', name: 'Intent Classifier', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'urgency', type: 'decision', name: 'Urgency Check', x: 350, y: 150, icon: <Zap className="w-4 h-4" />, color: 'bg-red-500' },
+        { id: 'fast_tts', type: 'process', name: 'Fast TTS (Decoder-Only)', x: 500, y: 100, icon: <Speaker className="w-4 h-4" />, color: 'bg-orange-600' },
+        { id: 'quality_tts', type: 'process', name: 'Quality TTS (Location-Aware)', x: 500, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'delivery', type: 'output', name: 'Voice Delivery', x: 650, y: 150, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'webhook', to: 'classify' },
+        { from: 'classify', to: 'urgency' },
+        { from: 'urgency', to: 'fast_tts' },
+        { from: 'urgency', to: 'quality_tts' },
+        { from: 'fast_tts', to: 'delivery' },
+        { from: 'quality_tts', to: 'delivery' }
+      ]
+    },
+    multilingual: {
+      name: "Multilingual Content Pipeline",
+      description: "Automated translation and localized TTS with cultural adaptation",
+      nodes: [
+        { id: 'source', type: 'trigger', name: 'Content Source', x: 50, y: 200, icon: <Database className="w-4 h-4" />, color: 'bg-blue-500' },
+        { id: 'translate', type: 'process', name: 'Multi-Translator', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'cultural', type: 'process', name: 'Cultural Adapter', x: 350, y: 200, icon: <Settings className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'voice_select', type: 'decision', name: 'Voice Selector', x: 500, y: 150, icon: <Mic className="w-4 h-4" />, color: 'bg-orange-500' },
+        { id: 'en_tts', type: 'process', name: 'English TTS', x: 650, y: 80, icon: <Speaker className="w-4 h-4" />, color: 'bg-red-600' },
+        { id: 'es_tts', type: 'process', name: 'Spanish TTS', x: 650, y: 140, icon: <Speaker className="w-4 h-4" />, color: 'bg-yellow-600' },
+        { id: 'fr_tts', type: 'process', name: 'French TTS', x: 650, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'zh_tts', type: 'process', name: 'Chinese TTS', x: 650, y: 260, icon: <Speaker className="w-4 h-4" />, color: 'bg-purple-600' },
+        { id: 'quality_check', type: 'process', name: 'Quality Assurance', x: 800, y: 170, icon: <Zap className="w-4 h-4" />, color: 'bg-pink-500' },
+        { id: 'distribute', type: 'output', name: 'Global Distribution', x: 950, y: 170, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from:
