@@ -1,0 +1,36 @@
+https://n8n.torontik.com
+n8n.torontik.com -> n8n-web-app-45782.azurewebsites.net
+const customDomain = "n8n.torontik.com"; // Your subdomain
+
+async function configureCustomDomain() {
+  console.log(`\n⚠️ Go to your DNS settings and add:\n`);
+  console.log(`CNAME  n8n  ->  ${webAppName}.azurewebsites.net`);
+  console.log(`Waiting for verification...\n`);
+
+  try {
+    await webSiteClient.webApps.beginCreateOrUpdateHostNameBindingAndWait(
+      resourceGroupName,
+      webAppName,
+      customDomain,
+      {
+        siteName: webAppName,
+        hostNameBindingName: customDomain,
+        properties: {
+          customHostNameDnsRecordType: "CName",
+          hostNameType: "Verified"
+        }
+      }
+    );
+
+    console.log(`✅ Domain "${customDomain}" successfully bound.`);
+    console.log("👉 Visit it after enabling HTTPS in Azure Portal.");
+  } catch (err) {
+    console.error("❌ DNS not verified yet. Wait a bit or check CNAME.");
+    console.error("Details:", err.message);
+  }
+}
+deployN8nApp()
+  .then(() => configureCustomDomain())
+  .catch(console.error);
+https://n8n.torontik.com
+
