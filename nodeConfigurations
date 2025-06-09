@@ -1,0 +1,494 @@
+import React, { useState } from 'react';
+import { Play, Settings, Database, Mic, Speaker, Brain, Code, GitBranch, Zap, Cloud } from 'lucide-react';
+
+const N8NWorkflowDiagrams = () => {
+  const [activeWorkflow, setActiveWorkflow] = useState('podcast');
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const workflows = {
+    podcast: {
+      name: "Automated Podcast Generation",
+      description: "End-to-end podcast creation from RSS feeds with multiple TTS attention mechanisms",
+      nodes: [
+        { id: 'rss', type: 'trigger', name: 'RSS Feed Monitor', x: 50, y: 200, icon: <GitBranch className="w-4 h-4" />, color: 'bg-blue-500' },
+        { id: 'content', type: 'process', name: 'Content Analyzer', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'script', type: 'process', name: 'Script Generator', x: 350, y: 200, icon: <Code className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'attention', type: 'decision', name: 'Attention Selector', x: 500, y: 150, icon: <Settings className="w-4 h-4" />, color: 'bg-orange-500' },
+        { id: 'tts1', type: 'process', name: 'Content-Based TTS', x: 650, y: 100, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'tts2', type: 'process', name: 'Location-Aware TTS', x: 650, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-purple-600' },
+        { id: 'quality', type: 'process', name: 'Quality Checker', x: 800, y: 150, icon: <Zap className="w-4 h-4" />, color: 'bg-red-500' },
+        { id: 'publish', type: 'output', name: 'Publish to AWS', x: 950, y: 150, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'rss', to: 'content' },
+        { from: 'content', to: 'script' },
+        { from: 'script', to: 'attention' },
+        { from: 'attention', to: 'tts1' },
+        { from: 'attention', to: 'tts2' },
+        { from: 'tts1', to: 'quality' },
+        { from: 'tts2', to: 'quality' },
+        { from: 'quality', to: 'publish' }
+      ]
+    },
+    customer: {
+      name: "Customer Service Voice Bot",
+      description: "Real-time customer support with dynamic attention mechanism selection",
+      nodes: [
+        { id: 'webhook', type: 'trigger', name: 'Support Webhook', x: 50, y: 200, icon: <Mic className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'classify', type: 'process', name: 'Intent Classifier', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'urgency', type: 'decision', name: 'Urgency Check', x: 350, y: 150, icon: <Zap className="w-4 h-4" />, color: 'bg-red-500' },
+        { id: 'fast_tts', type: 'process', name: 'Fast TTS (Decoder-Only)', x: 500, y: 100, icon: <Speaker className="w-4 h-4" />, color: 'bg-orange-600' },
+        { id: 'quality_tts', type: 'process', name: 'Quality TTS (Location-Aware)', x: 500, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'delivery', type: 'output', name: 'Voice Delivery', x: 650, y: 150, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'webhook', to: 'classify' },
+        { from: 'classify', to: 'urgency' },
+        { from: 'urgency', to: 'fast_tts' },
+        { from: 'urgency', to: 'quality_tts' },
+        { from: 'fast_tts', to: 'delivery' },
+        { from: 'quality_tts', to: 'delivery' }
+      ]
+    },
+    multilingual: {
+      name: "Multilingual Content Pipeline",
+      description: "Automated translation and localized TTS with cultural adaptation",
+      nodes: [
+        { id: 'source', type: 'trigger', name: 'Content Source', x: 50, y: 200, icon: <Database className="w-4 h-4" />, color: 'bg-blue-500' },
+        { id: 'translate', type: 'process', name: 'Multi-Translator', x: 200, y: 200, icon: <Brain className="w-4 h-4" />, color: 'bg-purple-500' },
+        { id: 'cultural', type: 'process', name: 'Cultural Adapter', x: 350, y: 200, icon: <Settings className="w-4 h-4" />, color: 'bg-green-500' },
+        { id: 'voice_select', type: 'decision', name: 'Voice Selector', x: 500, y: 150, icon: <Mic className="w-4 h-4" />, color: 'bg-orange-500' },
+        { id: 'en_tts', type: 'process', name: 'English TTS', x: 650, y: 80, icon: <Speaker className="w-4 h-4" />, color: 'bg-red-600' },
+        { id: 'es_tts', type: 'process', name: 'Spanish TTS', x: 650, y: 140, icon: <Speaker className="w-4 h-4" />, color: 'bg-yellow-600' },
+        { id: 'fr_tts', type: 'process', name: 'French TTS', x: 650, y: 200, icon: <Speaker className="w-4 h-4" />, color: 'bg-blue-600' },
+        { id: 'zh_tts', type: 'process', name: 'Chinese TTS', x: 650, y: 260, icon: <Speaker className="w-4 h-4" />, color: 'bg-purple-600' },
+        { id: 'quality_check', type: 'process', name: 'Quality Assurance', x: 800, y: 170, icon: <Zap className="w-4 h-4" />, color: 'bg-pink-500' },
+        { id: 'distribute', type: 'output', name: 'Global Distribution', x: 950, y: 170, icon: <Cloud className="w-4 h-4" />, color: 'bg-indigo-500' }
+      ],
+      connections: [
+        { from: 'source', to: 'translate' },
+        { from: 'translate', to: 'cultural' },
+        { from: 'cultural', to: 'voice_select' },
+        { from: 'voice_select', to: 'en_tts' },
+        { from: 'voice_select', to: 'es_tts' },
+        { from: 'voice_select', to: 'fr_tts' },
+        { from: 'voice_select', to: 'zh_tts' },
+        { from: 'en_tts', to: 'quality_check' },
+        { from: 'es_tts', to: 'quality_check' },
+        { from: 'fr_tts', to: 'quality_check' },
+        { from: 'zh_tts', to: 'quality_check' },
+        { from: 'quality_check', to: 'distribute' }
+      ]
+    }
+  };
+
+  const nodeConfigurations = {
+    // Podcast Workflow
+    rss: {
+      title: "RSS Feed Monitor",
+      description: "Monitors RSS feeds for new content every 15 minutes.",
+      config: {
+        url: "https://example-podcast.com/feed.xml",
+        interval: "15 minutes",
+        filter: "new episodes only"
+      },
+      code: `{
+  "parameters": {
+    "url": "={{$json.rss_url}}",
+    "pollInterval": 900,
+    "options": {
+      "triggerOn": "newItem"
+    }
+  }
+}`
+    },
+    content: {
+      title: "Content Analyzer",
+      description: "Analyzes RSS content, extracts topics and metadata for downstream TTS.",
+      config: {
+        nlp_provider: "IBM Watson NLU",
+        extract_topics: true,
+        summary_length: 3
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['content']}}",
+    "features": {
+      "categories": true,
+      "entities": true,
+      "keywords": true
+    },
+    "summary_sentences": 3
+  }
+}`
+    },
+    script: {
+      title: "Script Generator",
+      description: "Generates spoken script from analyzed content, ready for TTS.",
+      config: {
+        template: "Podcast intro, main, outro",
+        language: "en",
+        length: "3-5 minutes"
+      },
+      code: `{
+  "parameters": {
+    "content": "={{$json['summary']}}",
+    "template": "podcast",
+    "language": "en"
+  }
+}`
+    },
+    attention: {
+      title: "Attention Mechanism Selector",
+      description: "Dynamically selects TTS attention mechanism based on content analysis.",
+      config: {
+        criteria: "Content complexity, urgency, quality requirements",
+        fallback: "content_based",
+        performance_threshold: "2.0 RTF"
+      },
+      code: `{
+  "parameters": {
+    "conditions": {
+      "complex_content": "location_aware",
+      "real_time": "decoder_only", 
+      "balanced": "content_based",
+      "mobile": "location_based"
+    },
+    "evaluation": "={{$json.complexity_score}}"
+  }
+}`
+    },
+    tts1: {
+      title: "Content-Based TTS Node",
+      description: "High-quality TTS using content-based attention mechanism.",
+      config: {
+        voice: "IBM Watson Neural Voice",
+        attention_type: "content_based",
+        quality: "premium"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json.script_content}}",
+    "voice": "en-US_AllisonV3Voice",
+    "attention_mechanism": "content_based",
+    "accept": "audio/wav",
+    "rate": "22050"
+  }
+}`
+    },
+    tts2: {
+      title: "Location-Aware TTS Node",
+      description: "Latency-optimized TTS for mobile and live scenarios.",
+      config: {
+        voice: "IBM Watson Fast Voice",
+        attention_type: "location_aware",
+        quality: "standard"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json.script_content}}",
+    "voice": "en-US_MichaelV3Voice",
+    "attention_mechanism": "location_aware",
+    "accept": "audio/wav",
+    "rate": "16000"
+  }
+}`
+    },
+    quality: {
+      title: "Audio Quality Checker",
+      description: "Validates audio quality using MOS scoring and WER analysis.",
+      config: {
+        min_mos: 4.0,
+        max_wer: 3.0,
+        format_check: true
+      },
+      code: `{
+  "parameters": {
+    "quality_metrics": {
+      "mos_threshold": 4.0,
+      "wer_threshold": 3.0,
+      "snr_minimum": 20
+    },
+    "retry_on_fail": true
+  }
+}`
+    },
+    publish: {
+      title: "Publish to AWS",
+      description: "Publishes finalized audio to AWS S3 with metadata.",
+      config: {
+        bucket: "n8n-podcast-audio",
+        region: "us-east-1",
+        acl: "public-read"
+      },
+      code: `{
+  "parameters": {
+    "audio_file": "={{$binary.audio.data}}",
+    "bucket": "n8n-podcast-audio",
+    "region": "us-east-1",
+    "acl": "public-read"
+  }
+}`
+    },
+
+    // Customer Workflow
+    webhook: {
+      title: "Support Webhook",
+      description: "Receives customer requests in real-time for voice bot processing.",
+      config: {
+        url: "https://n8n.torontik.com/webhook/support",
+        method: "POST"
+      },
+      code: `{
+  "parameters": {
+    "path": "/webhook/support",
+    "method": "POST"
+  }
+}`
+    },
+    classify: {
+      title: "Intent Classifier",
+      description: "Classifies customer intent using NLP.",
+      config: {
+        model: "IBM Watson Assistant",
+        confidence_threshold: 0.8
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['input']}}",
+    "model": "watson-assistant",
+    "min_confidence": 0.8
+  }
+}`
+    },
+    urgency: {
+      title: "Urgency Check",
+      description: "Checks urgency of the support request for TTS adaptation.",
+      config: {
+        urgent_keywords: ["now", "immediately", "asap"],
+        threshold: 0.7
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['input']}}",
+    "keywords": ["now", "immediately", "asap"],
+    "threshold": 0.7
+  }
+}`
+    },
+    fast_tts: {
+      title: "Fast TTS (Decoder-Only)",
+      description: "Ultra-fast TTS for time-critical responses.",
+      config: {
+        voice: "en-US_FastVoice",
+        attention_type: "decoder_only"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['response_text']}}",
+    "voice": "en-US_FastVoice",
+    "attention_mechanism": "decoder_only"
+  }
+}`
+    },
+    quality_tts: {
+      title: "Quality TTS (Location-Aware)",
+      description: "Higher-quality TTS for non-urgent or detailed replies.",
+      config: {
+        voice: "en-US_QualityVoice",
+        attention_type: "location_aware"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['response_text']}}",
+    "voice": "en-US_QualityVoice",
+    "attention_mechanism": "location_aware"
+  }
+}`
+    },
+    delivery: {
+      title: "Voice Delivery",
+      description: "Delivers synthesized audio to customer endpoint.",
+      config: {
+        delivery_type: "websocket",
+        endpoint: "wss://n8n.torontik.com/delivery"
+      },
+      code: `{
+  "parameters": {
+    "audio": "={{$binary.audio.data}}",
+    "endpoint": "wss://n8n.torontik.com/delivery",
+    "delivery_type": "websocket"
+  }
+}`
+    },
+
+    // Multilingual Workflow
+    source: {
+      title: "Content Source",
+      description: "Initial content input for translation and TTS.",
+      config: {
+        source_type: "API",
+        endpoint: "https://n8n.torontik.com/api/source"
+      },
+      code: `{
+  "parameters": {
+    "endpoint": "https://n8n.torontik.com/api/source",
+    "fetch_method": "GET"
+  }
+}`
+    },
+    translate: {
+      title: "Multi-Translator",
+      description: "Translates content into multiple languages using IBM Watson.",
+      config: {
+        languages: ["en", "es", "fr", "zh"],
+        provider: "IBM Watson Language Translator"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['content']}}",
+    "languages": ["en", "es", "fr", "zh"],
+    "provider": "watson-translator"
+  }
+}`
+    },
+    cultural: {
+      title: "Cultural Adapter",
+      description: "Adapts translations for cultural appropriateness.",
+      config: {
+        adapt: true,
+        check_holidays: true,
+        region: "auto"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['translated_text']}}",
+    "adapt_culture": true,
+    "region": "={{$json['target_region']}}",
+    "check_holidays": true
+  }
+}`
+    },
+    voice_select: {
+      title: "Voice Selector",
+      description: "Selects voice based on language and user profile.",
+      config: {
+        profiles: ["standard", "child", "elder"],
+        default: "standard"
+      },
+      code: `{
+  "parameters": {
+    "language": "={{$json['target_language']}}",
+    "profile": "={{$json['user_profile'] || 'standard'}}"
+  }
+}`
+    },
+    en_tts: {
+      title: "English TTS",
+      description: "Synthesizes English voice output.",
+      config: {
+        voice: "en-US_AllisonV3Voice",
+        format: "audio/wav"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['en_text']}}",
+    "voice": "en-US_AllisonV3Voice",
+    "accept": "audio/wav"
+  }
+}`
+    },
+    es_tts: {
+      title: "Spanish TTS",
+      description: "Synthesizes Spanish voice output.",
+      config: {
+        voice: "es-ES_EnriqueV3Voice",
+        format: "audio/wav"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['es_text']}}",
+    "voice": "es-ES_EnriqueV3Voice",
+    "accept": "audio/wav"
+  }
+}`
+    },
+    fr_tts: {
+      title: "French TTS",
+      description: "Synthesizes French voice output.",
+      config: {
+        voice: "fr-FR_ReneeV3Voice",
+        format: "audio/wav"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['fr_text']}}",
+    "voice": "fr-FR_ReneeV3Voice",
+    "accept": "audio/wav"
+  }
+}`
+    },
+    zh_tts: {
+      title: "Chinese TTS",
+      description: "Synthesizes Chinese voice output.",
+      config: {
+        voice: "zh-CN_LiNaVoice",
+        format: "audio/wav"
+      },
+      code: `{
+  "parameters": {
+    "text": "={{$json['zh_text']}}",
+    "voice": "zh-CN_LiNaVoice",
+    "accept": "audio/wav"
+  }
+}`
+    },
+    quality_check: {
+      title: "Quality Assurance",
+      description: "Checks multilingual audio for quality and compliance.",
+      config: {
+        min_mos: 4.2,
+        max_wer: 2.5,
+        languages: ["en", "es", "fr", "zh"]
+      },
+      code: `{
+  "parameters": {
+    "audio_inputs": [
+      "={{$binary.en_audio.data}}",
+      "={{$binary.es_audio.data}}",
+      "={{$binary.fr_audio.data}}",
+      "={{$binary.zh_audio.data}}"
+    ],
+    "mos_threshold": 4.2,
+    "wer_threshold": 2.5
+  }
+}`
+    },
+    distribute: {
+      title: "Global Distribution",
+      description: "Delivers multilingual audio to global endpoints.",
+      config: {
+        cloud: "AWS S3",
+        bucket: "n8n-global-audio"
+      },
+      code: `{
+  "parameters": {
+    "files": [
+      "={{$binary.en_audio.data}}",
+      "={{$binary.es_audio.data}}",
+      "={{$binary.fr_audio.data}}",
+      "={{$binary.zh_audio.data}}"
+    ],
+    "bucket": "n8n-global-audio"
+  }
+}`
+    }
+  };
+
+  // ...rest of the code remains unchanged...
+  // (The rest of your component is as in your original post and does not need to change for nodeConfigurations.)
+
+  // ... (UI rendering and export remain unchanged)
+};
+
+export default N8NWorkflowDiagrams;
