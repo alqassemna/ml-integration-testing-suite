@@ -1,0 +1,62 @@
+const { DefaultAzureCredential } = require("@azure/identity");
+const { WebSiteManagementClient } = require("@azure/arm-appservice");
+const { ResourceManagementClient } = require("@azure/arm-resources");
+
+const subscriptionId = "<your-subscription-id>";
+const resourceGroupName = "n8n-resource-group";
+const location = "eastus";
+const appServicePlanName = "n8n-app-plan";
+const webAppName = "n8n-web-app-" + Math.floor(Math.random() * 100000); // globally unique
+
+const credential = new DefaultAzureCredential();
+const resourceClient = new ResourceManagementClient(credential, subscriptionId);
+const webSiteClient = new WebSiteManagementClient(credential, subscriptionId);
+
+async function deployN8nApp() {
+  // 1. Create resource group
+  console.log("Creating resource group...");
+  await resourceClient.resourceGroups.createOrUpdate(resourceGroupName, { location });
+
+  // 2. Create App Service plan
+  console.log("Creating Linux App Service plan...");
+  await webSiteClient.appServicePlans.beginCreateOrUpdateAndWait(resourceGroupName, appServicePlanName, {
+    location,
+    kind: "linux",
+    reserved: true,
+    sku: {
+      name: "B1",
+      tier: "Basic",
+      size: "B1",
+      capacity: 1,
+    }
+  });
+
+  // 3. Create Web App with environment variables
+  console.log("Creating Web App with Docker container and environment variables...");
+  await webSiteClient.webApps.beginCreateOrUpdateAndWait(resourceGroupName, webAppName, {
+    location,
+    serverFarmId: appServicePlanName,
+    siteConfig: {
+      linuxFxVersion: "DOCKER|n8nio/n8n",
+      appSettings: [
+        { name: "WEBSITES_ENABLE_APP_SERVICE_STORAGE", value: "false" },
+        { name: "WEBSITES_PORT", value: "5678" },
+
+        // n8n-specific environment variables:
+        { name: "N8N_BASIC_AUTH_ACTIVE", value: "true" },
+        { name: "N8N_BASIC_AUTH_USER", value: "admin" },
+        { name: "N8N_BASIC_AUTH_PASSWORD", value: "supersecurepassword" },
+        { name: "N8N_HOST", value: `${webAppName}.azurewebsites.net` },
+        { name: "N8N_PORT", value: "5678" },
+        { name: "WEBHOOK_URL", value: `https://${webAppName}.azurewebsites.net/` }
+      ]
+    },
+    httpsOnly: true
+  });
+
+  console.log(`✅ n8n Web App deployed: https://${webAppName}.azurewebsites.net`);
+}
+
+deployN8nApp().catch((err) => {
+  console.error("Error deploying n8n:", err.message);
+});
